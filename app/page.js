@@ -33,11 +33,10 @@ export default function Home() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [guests, setGuests] = useState('')
-  const [bookedTables, setBookedTables] = useState([])
+  const [blockedTableSlots, setBlockedTableSlots] = useState([]) // chứa table-slot riêng
   const [selectedTable, setSelectedTable] = useState(null)
   const [success, setSuccess] = useState(false)
 
-  // Cấu hình bàn
   const tablesConfig = {
     1: { min: 2, max: 4 },
     2: { min: 2, max: 4 },
@@ -53,7 +52,6 @@ export default function Home() {
     12: { min: 2, max: 4 }
   }
 
-  // Các khu vực
   const areas = {
     'Tầng 1': Array.from({ length: 8 }, (_, i) => i + 1),
     'Tầng 5': Array.from({ length: 4 }, (_, i) => i + 9)
@@ -71,28 +69,22 @@ export default function Home() {
       .select('*')
       .eq('date', date)
 
-    const blockedTables = []
+    const blocked = []
 
     data?.forEach(d => {
-      const [h, m] = d.time.split(':').map(Number)
-      const bookingStart = new Date()
-      bookingStart.setHours(h, m, 0, 0)
-      const bookingEnd = new Date(bookingStart.getTime() + 89 * 60 * 1000)
-
-      timeSlots.forEach(t => {
-        const [th, tm] = t.split(':').map(Number)
-        const slotTime = new Date()
-        slotTime.setHours(th, tm, 0, 0)
-        if (slotTime >= bookingStart && slotTime < bookingEnd) {
-          blockedTables.push(`${d.table_number}-${t}`)
+      const startIndex = timeSlots.indexOf(d.time)
+      if (startIndex !== -1) {
+        // khóa khung giờ của bàn đó và 2 slot tiếp theo (tổng 3 slot)
+        for (let i = startIndex; i < startIndex + 3 && i < timeSlots.length; i++) {
+          blocked.push(`${d.table_number}-${timeSlots[i]}`)
         }
-      })
+      }
     })
 
-    setBookedTables([...new Set(blockedTables)])
+    setBlockedTableSlots([...new Set(blocked)])
   }
 
-  // Auto chọn bàn theo số khách
+  // Auto chọn bàn theo số khách và slot đang chọn
   useEffect(() => {
     if (!guests || !time) return
     const guestCount = Number(guests)
@@ -101,12 +93,12 @@ export default function Home() {
       .flat()
       .filter(t => {
         const config = tablesConfig[t] || {}
-        const isBooked = bookedTables.includes(`${t}-${time}`)
-        return !isBooked && guestCount >= (config.min || 1) && guestCount <= (config.max || 99)
+        const isBlocked = blockedTableSlots.includes(`${t}-${time}`)
+        return !isBlocked && guestCount >= (config.min || 1) && guestCount <= (config.max || 99)
       })
 
     setSelectedTable(available.length > 0 ? available[0] : null)
-  }, [guests, bookedTables, time])
+  }, [guests, blockedTableSlots, time])
 
   async function handleBooking() {
     if (!selectedTable || !time) return
@@ -122,12 +114,8 @@ export default function Home() {
     }
   }
 
-  // Kiểm tra slot thời gian có disable không
-  const isSlotDisabled = (slot) => {
-    // slot disable nếu tất cả bàn đều đã bị đặt cho slot đó
-    const allBooked = Object.values(areas).flat().every(t => bookedTables.includes(`${t}-${slot}`))
-    return allBooked
-  }
+  // Check xem slot thời gian của bàn có bị khóa không
+  const isTableSlotBlocked = (table, slot) => blockedTableSlots.includes(`${table}-${slot}`)
 
   return (
     <div style={{ padding: 20 }}>
@@ -145,13 +133,16 @@ export default function Home() {
 
         <div className="time-grid">
           {timeSlots.map(t => {
-            const disabled = isSlotDisabled(t)
+            // slot disable nếu tất cả bàn đều đã block slot đó
+            const allBlocked = Object.values(areas)
+              .flat()
+              .every(table => blockedTableSlots.includes(`${table}-${t}`))
             return (
               <button
                 key={t}
-                onClick={() => !disabled && setTime(t)}
-                disabled={disabled}
-                className={disabled ? 'time disabled' : time === t ? 'time active' : 'time'}
+                onClick={() => !allBlocked && setTime(t)}
+                disabled={allBlocked}
+                className={allBlocked ? 'time disabled' : time === t ? 'time active' : 'time'}
               >
                 {t}
               </button>
@@ -180,13 +171,13 @@ export default function Home() {
               const notEnough = guests && guestCount < config.min
               const tooMany = guests && guestCount > config.max
               const isInvalid = notEnough || tooMany
-              const isBooked = time ? bookedTables.includes(`${t}-${time}`) : false
+              const isBlocked = time ? isTableSlotBlocked(t, time) : false
               return (
                 <button
                   key={t}
                   onClick={() => setSelectedTable(t)}
-                  disabled={isInvalid || isBooked}
-                  className={isBooked ? 'table disabled' : selectedTable === t ? 'table active' : isInvalid ? 'table disabled' : 'table'}
+                  disabled={isInvalid || isBlocked}
+                  className={isBlocked ? 'table disabled' : selectedTable === t ? 'table active' : isInvalid ? 'table disabled' : 'table'}
                 >
                   Bàn {t}
                   <div style={{ fontSize: 12 }}>
