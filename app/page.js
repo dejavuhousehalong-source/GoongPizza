@@ -69,15 +69,29 @@ function addMinutes(time, mins) {
 
   return `${hh}:${mm}`
 }
-  async function fetchBookings() {
-    const { data } = await supabase
-      .from('reservations')
-      .select('*')
-      .eq('date', date)
-.gte('time', time)
-.lte('time', addMinutes(time, 89))
-    setBookedTables(data?.map(d => d.table_number) || [])
-  }
+async function fetchBookings() {
+  const { data } = await supabase
+    .from('reservations')
+    .select('*')
+    .eq('date', date)
+
+  const filtered = data?.filter(d => {
+    const [h1, m1] = d.time.split(':').map(Number)
+    const [h2, m2] = time.split(':').map(Number)
+
+    const bookingStart = new Date()
+    bookingStart.setHours(h1, m1, 0, 0)
+    const bookingEnd = new Date(bookingStart.getTime() + 90 * 60 * 1000)
+
+    const selectedStart = new Date()
+    selectedStart.setHours(h2, m2, 0, 0)
+    const selectedEnd = new Date(selectedStart.getTime() + 90 * 60 * 1000)
+
+    return bookingStart < selectedEnd && bookingEnd > selectedStart
+  }) || []
+
+  setBookedTables(filtered.map(d => d.table_number))
+}
 
   // 🔥 Auto chọn bàn theo số khách
 useEffect(() => {
