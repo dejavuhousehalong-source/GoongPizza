@@ -131,11 +131,7 @@ useEffect(() => {
         />
         <div className="time-grid">
   {timeSlots.map(t => {
-const isDisabled =
-  time &&
-  t >= time &&
-  t <= addMinutes(time, 89) &&
-  t !== time
+const isDisabled = false
     return (
       <button
         key={t}
