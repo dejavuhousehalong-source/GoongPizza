@@ -104,7 +104,9 @@ export default function Home() {
   placeholder="Số khách"
   onChange={e => setGuests(e.target.value)}
 />
-      <button onClick={handleBooking}>Đặt bàn</button>
+      <button className="btn-book" onClick={handleBooking}>
+  🍕 Đặt bàn ngay
+</button>
     </div>
   )
 }
