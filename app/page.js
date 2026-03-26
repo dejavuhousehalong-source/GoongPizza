@@ -8,7 +8,7 @@ const supabase = createClient(
   'sb_publishable_ZCs9awg61ilMjl2TP-ZTxg_RW9DZqbH'
 )
 
-function generateTimeSlots(start, end, step){
+function generateTimeSlots(start,end,step){
   const times=[]
   let [h,m]=start.split(':').map(Number)
   const [endH,endM]=end.split(':').map(Number)
@@ -23,7 +23,7 @@ function generateTimeSlots(start, end, step){
   return times
 }
 
-const timeSlots = generateTimeSlots("11:00","20:30",30)
+const timeSlots=generateTimeSlots('11:00','20:30',30)
 
 export default function Home(){
   const [date,setDate]=useState('')
@@ -39,7 +39,7 @@ export default function Home(){
   const [selectedTable,setSelectedTable]=useState(null)
   const [success,setSuccess]=useState(false)
 
-  const tablesConfig = {
+  const tablesConfig={
     1:{min:2,max:4},2:{min:2,max:4},3:{min:4,max:8},4:{min:2,max:4},
     5:{min:2,max:4},6:{min:2,max:4},7:{min:2,max:4},8:{min:3,max:6},
     9:{min:2,max:4},10:{min:2,max:4},11:{min:2,max:4},12:{min:2,max:4}
@@ -50,6 +50,7 @@ export default function Home(){
     'Tầng 5':Array.from({length:4},(_,i)=>i+9)
   }
 
+  // Lấy booking từ supabase
   useEffect(()=>{
     if(date) fetchBookings()
   },[date])
@@ -69,23 +70,20 @@ export default function Home(){
     setBookedTables(blocked)
   }
 
-  // auto chọn bàn khi đủ info date/time/guests
+  // Auto chọn bàn khi đủ thông tin
   useEffect(()=>{
-    if(!date || !time || !guests){
-      setSelectedTable(null)
-      return
-    }
-    const available = Object.values(areas).flat().filter(t=>{
-      const config = tablesConfig[t] || {}
-      const g = Number(guests)
-      const invalid = g < (config.min || 1) || g > (config.max || 99)
-      const booked = bookedTables[t]?.includes(time)
-      return !invalid && !booked
+    if(!date||!time||!guests){ setSelectedTable(null); return }
+    const available=Object.values(areas).flat().filter(t=>{
+      const config=tablesConfig[t]||{}
+      const g=Number(guests)
+      const invalid=g<config.min||g>config.max
+      const booked=bookedTables[t]?.includes(time)
+      return !invalid&&!booked
     })
-    if(available.length>0) setSelectedTable(available[0])
-    else setSelectedTable(null)
+    setSelectedTable(available.length>0? available[0]: null)
   },[date,time,guests,bookedTables])
 
+  // Gửi OTP
   async function sendOtp(){
     if(!email) return alert('Nhập email để nhận OTP')
     const code=Math.floor(100000+Math.random()*900000).toString()
@@ -130,9 +128,8 @@ export default function Home(){
     <div style={{padding:20}}>
       <div className="booking-box">
         <h2>Thông tin đặt bàn</h2>
-
-        <input type="text" placeholder="Chọn ngày"
-          value={date} onFocus={e=>e.target.type='date'}
+        <input type="text" placeholder="Chọn ngày" value={date}
+          onFocus={e=>e.target.type='date'}
           onChange={e=>setDate(e.target.value)}
           onBlur={e=>{if(!date)e.target.type='text'}}
         />
@@ -143,8 +140,7 @@ export default function Home(){
             if(selectedTable) isBlocked=bookedTables[selectedTable]?.includes(t)
             const disabled=!date||!guests||isBlocked
             return (
-              <button key={t}
-                disabled={disabled}
+              <button key={t} disabled={disabled}
                 className={isBlocked?'time disabled':time===t?'time active':'time'}
                 onClick={()=>!disabled&&setTime(t)}
               >{t}</button>
