@@ -16,12 +16,12 @@ function generateTimeSlots(start, end, step) {
   while (h < endH || (h === endH && m <= endM)) {
     times.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`)
     m += step
-    if(m>=60){ h+=Math.floor(m/60); m%=60 }
+    if(m >= 60){ h += Math.floor(m/60); m %= 60 }
   }
   return times
 }
 
-const timeSlots = generateTimeSlots("11:00","20:30",30)
+const timeSlots = generateTimeSlots("11:00", "20:30", 30)
 
 export default function Home() {
   const [date, setDate] = useState('')
@@ -29,19 +29,28 @@ export default function Home() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [guests, setGuests] = useState('')
-  const [bookedTableSlots, setBookedTableSlots] = useState({}) // {table_number: [slots]}
+  const [bookedTableSlots, setBookedTableSlots] = useState({})
   const [selectedTable, setSelectedTable] = useState(null)
   const [success, setSuccess] = useState(false)
 
   const tablesConfig = {
-    1:{min:2,max:4},2:{min:2,max:4},3:{min:4,max:8},4:{min:2,max:4},
-    5:{min:2,max:4},6:{min:2,max:4},7:{min:2,max:4},8:{min:3,max:6},
-    9:{min:2,max:4},10:{min:2,max:4},11:{min:2,max:4},12:{min:2,max:4}
+    1: { min: 2, max: 4 },
+    2: { min: 2, max: 4 },
+    3: { min: 4, max: 8 },
+    4: { min: 2, max: 4 },
+    5: { min: 2, max: 4 },
+    6: { min: 2, max: 4 },
+    7: { min: 2, max: 4 },
+    8: { min: 3, max: 6 },
+    9: { min: 2, max: 4 },
+    10: { min: 2, max: 4 },
+    11: { min: 2, max: 4 },
+    12: { min: 2, max: 4 }
   }
 
   const areas = {
-    'Tầng 1': Array.from({length:8},(_,i)=>i+1),
-    'Tầng 5': Array.from({length:4},(_,i)=>i+9)
+    'Tầng 1': Array.from({ length: 8 }, (_, i) => i + 1),
+    'Tầng 5': Array.from({ length: 4 }, (_, i) => i + 9)
   }
 
   useEffect(() => {
@@ -58,106 +67,135 @@ export default function Home() {
     return `${hh}:${mm}`
   }
 
-  async function fetchBookings(){
+  async function fetchBookings() {
     if(!date) return
-    const { data } = await supabase.from('reservations').select('*').eq('date',date)
+    const { data } = await supabase.from('reservations').select('*').eq('date', date)
     const booked = {}
-    data?.forEach(d=>{
+
+    data?.forEach(d => {
       const startIndex = timeSlots.indexOf(d.time)
-      if(startIndex!==-1){
+      if(startIndex !== -1){
         const slots = []
-        for(let i=startIndex;i<startIndex+3 && i<timeSlots.length;i++){
+        for(let i=startIndex; i<startIndex+3 && i<timeSlots.length; i++){
           slots.push(timeSlots[i])
         }
-        booked[d.table_number] = booked[d.table_number]? [...booked[d.table_number], ...slots] : slots
+        booked[d.table_number] = booked[d.table_number] ? [...booked[d.table_number], ...slots] : slots
       }
     })
+
     setBookedTableSlots(booked)
   }
 
-  // 🔥 Auto chọn bàn theo số khách
-  useEffect(()=>{
-    if(!guests) return
-    const available = Object.values(areas)
-      .flat()
-      .filter(t=>{
-        const config = tablesConfig[t]||{}
-        return !bookedTableSlots[t] && guests >= (config.min||1) && guests <= (config.max||99)
-      })
-    if(available.length>0) setSelectedTable(available[0])
-    else setSelectedTable(null)
-  }, [guests, bookedTableSlots])
+  // 🔥 Auto chọn bàn theo số khách, chỉ khi điền đủ info
+  useEffect(() => {
+    if(!date || !time || !guests) {
+      setSelectedTable(null)
+      return
+    }
 
-  async function handleBooking(){
+    const available = Object.values(areas).flat().filter(t => {
+      const config = tablesConfig[t] || {}
+      const guestCount = Number(guests)
+      const isInvalid = guestCount < (config.min || 1) || guestCount > (config.max || 99)
+      const isBooked = bookedTableSlots[t]?.includes(time)
+      return !isInvalid && !isBooked
+    })
+
+    if(available.length > 0) setSelectedTable(available[0])
+    else setSelectedTable(null)
+  }, [date, time, guests, bookedTableSlots])
+
+  async function handleBooking() {
     if(!selectedTable || !time) return
+
     const { error } = await supabase.from('reservations').insert([
       { name, phone, guests: Number(guests), date, time, table_number: selectedTable }
     ])
+
     if(!error){
       setSuccess(true)
-      setTimeout(()=>setSuccess(false),3000)
-      fetchBookings()
+      setTimeout(() => setSuccess(false), 3000)
+
+      // 🔥 Cập nhật local bookedTableSlots ngay lập tức
+      const startIndex = timeSlots.indexOf(time)
+      const slotsToBlock = []
+      for(let i=startIndex; i<startIndex+3 && i<timeSlots.length; i++){
+        slotsToBlock.push(timeSlots[i])
+      }
+      setBookedTableSlots(prev => ({
+        ...prev,
+        [selectedTable]: prev[selectedTable] ? [...prev[selectedTable], ...slotsToBlock] : slotsToBlock
+      }))
     }
   }
 
   return (
-    <div style={{padding:20}}>
+    <div style={{ padding: 20 }}>
       {/* FORM */}
       <div className="booking-box">
         <h2>Thông tin đặt bàn</h2>
+
         <input
           type="text"
           placeholder="Chọn ngày"
           value={date}
-          onFocus={e=>e.target.type='date'}
-          onChange={e=>setDate(e.target.value)}
-          onBlur={e=>{if(!date)e.target.type='text'}}
+          onFocus={e => e.target.type='date'}
+          onChange={e => setDate(e.target.value)}
+          onBlur={e => { if(!date) e.target.type='text' }}
         />
+
         <div className="time-grid">
-          {timeSlots.map(t=>{
+          {timeSlots.map(t => {
             const isBlocked = selectedTable && bookedTableSlots[selectedTable]?.includes(t)
+            const disabled = !date || !guests || !selectedTable || isBlocked
             return (
               <button
                 key={t}
-                onClick={()=>!isBlocked && setTime(t)}
-                disabled={isBlocked}
-                className={isBlocked ? 'time disabled' : time===t ? 'time active' : 'time'}
+                onClick={() => !disabled && setTime(t)}
+                disabled={disabled}
+                className={isBlocked ? 'time disabled' : time === t ? 'time active' : 'time'}
               >
                 {t}
               </button>
             )
           })}
         </div>
-        <input placeholder="Tên" onChange={e=>setName(e.target.value)} />
-        <input placeholder="SĐT" onChange={e=>setPhone(e.target.value)} />
+
+        <input placeholder="Tên" onChange={e => setName(e.target.value)} />
+        <input placeholder="SĐT" onChange={e => setPhone(e.target.value)} />
         <input
           type="number"
           placeholder="Số khách"
-          onChange={e=>setGuests(e.target.value)}
+          onChange={e => setGuests(e.target.value)}
         />
       </div>
 
       {/* CHỌN BÀN */}
-      {Object.entries(areas).map(([areaName,tables])=>(
-        <div key={areaName} style={{marginTop:30}}>
+      {Object.entries(areas).map(([areaName, tables]) => (
+        <div key={areaName} style={{ marginTop: 30 }}>
           <h3>{areaName}</h3>
-          <div style={{display:'flex',flexWrap:'wrap'}}>
-            {tables.map(t=>{
-              const config = tablesConfig[t] || {min:1,max:99}
-              const notEnoughGuests = guests && guests < config.min
-              const tooManyGuests = guests && guests > config.max
+          <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+            {tables.map(t => {
+              const config = tablesConfig[t] || { min: 1, max: 99 }
+              const guestCount = Number(guests)
+              const notEnoughGuests = guests && guestCount < config.min
+              const tooManyGuests = guests && guestCount > config.max
               const isInvalid = notEnoughGuests || tooManyGuests
+              const isBooked = bookedTableSlots[t]?.includes(time)
+              const canSelect = date && time && guests && !isInvalid && !isBooked
               return (
                 <button
                   key={t}
-                  onClick={()=>setSelectedTable(t)}
-                  disabled={isInvalid}
+                  onClick={() => canSelect && setSelectedTable(t)}
+                  disabled={!canSelect}
                   className={
-                    selectedTable===t?'table active':isInvalid?'table disabled':'table'
+                    selectedTable === t ? 'table active' :
+                    !canSelect ? 'table disabled' :
+                    'table'
                   }
                 >
                   Bàn {t}
-                  <div style={{fontSize:12}}>{config.min}-{config.max} khách</div>
+                  <div style={{ fontSize: 12 }}>{config.min} - {config.max} khách</div>
                 </button>
               )
             })}
@@ -184,7 +222,11 @@ export default function Home() {
       </div>
 
       {/* 🔥 POPUP SUCCESS */}
-      {success && <div className="popup">✅ Đặt bàn thành công!</div>}
+      {success && (
+        <div className="popup">
+          ✅ Đặt bàn thành công!
+        </div>
+      )}
     </div>
   )
 }
