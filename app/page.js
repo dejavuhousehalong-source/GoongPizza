@@ -7,10 +7,26 @@ const supabase = createClient(
   'https://tbebsblirpqblimwzesr.supabase.co',
   'sb_publishable_ZCs9awg61ilMjl2TP-ZTxg_RW9DZqbH'
 )
+function generateTimeSlots(start, end, step) {
+  const times = []
+  let [h, m] = start.split(':').map(Number)
+  const [endH, endM] = end.split(':').map(Number)
+
+  while (h < endH || (h === endH && m <= endM)) {
+    times.push(
+      `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+    )
+    m += step
+    if (m >= 60) {
+      h += Math.floor(m / 60)
+      m = m % 60
+    }
+  }
+
+  return times
+}
 
 const timeSlots = generateTimeSlots("11:00", "20:30", 30)
-
-]
 
 export default function Home() {
   const [date, setDate] = useState('')
@@ -115,28 +131,28 @@ useEffect(() => {
             if (!date) e.target.type = 'text'
           }}
         />
-        {/* 🔥 Chọn giờ dạng button */}
         <div className="time-grid">
-         {timeSlots.map(t => {
-  const isDisabled = bookedTables.length > 0 && t !== time
+  {timeSlots.map(t => {
+    const isDisabled = bookedTables.length > 0 && t !== time
 
-  return (
-    <button
-      key={t}
-      onClick={() => setTime(t)}
-      disabled={isDisabled}
-      className={
-        isDisabled
-          ? 'time disabled'
-          : time === t
-          ? 'time active'
-          : 'time'
-      }
-    >
-      {t}
-    </button>
-  )
-})}
+    return (
+      <button
+        key={t}
+        onClick={() => setTime(t)}
+        disabled={isDisabled}
+        className={
+          isDisabled
+            ? 'time disabled'
+            : time === t
+            ? 'time active'
+            : 'time'
+        }
+      >
+        {t}
+      </button>
+    )
+  })}
+</div>
             <button
               key={t}
               onClick={() => setTime(t)}
