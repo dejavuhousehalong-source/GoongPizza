@@ -8,6 +8,7 @@ const supabase = createClient(
   'sb_publishable_ZCs9awg61ilMjl2TP-ZTxg_RW9DZqbH'
 )
 
+// Tạo các slot thời gian
 function generateTimeSlots(start, end, step) {
   const times = []
   let [h, m] = start.split(':').map(Number)
@@ -32,7 +33,7 @@ export default function Home() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [guests, setGuests] = useState('')
-  const [blockedTableSlots, setBlockedTableSlots] = useState([])
+  const [blockedTableSlots, setBlockedTableSlots] = useState([]) // Lưu dạng "bàn-slot"
   const [selectedTable, setSelectedTable] = useState(null)
   const [success, setSuccess] = useState(false)
 
@@ -126,17 +127,14 @@ export default function Home() {
 
         <div className="time-grid">
           {timeSlots.map(slot => {
-            // Check nếu tất cả bàn đều bị khóa slot này
-            const allBlocked = Object.values(areas)
-              .flat()
-              .every(table => isTableSlotBlocked(table, slot))
-
+            // Disable slot nếu bàn đang chọn bị khóa ở slot đó
+            const selectedTableBlocked = selectedTable ? isTableSlotBlocked(selectedTable, slot) : false
             return (
               <button
                 key={slot}
-                onClick={() => !allBlocked && setTime(slot)}
-                disabled={allBlocked}
-                className={allBlocked ? 'time disabled' : time === slot ? 'time active' : 'time'}
+                onClick={() => !selectedTableBlocked && setTime(slot)}
+                disabled={selectedTableBlocked}
+                className={selectedTableBlocked ? 'time disabled' : time === slot ? 'time active' : 'time'}
               >
                 {slot}
               </button>
