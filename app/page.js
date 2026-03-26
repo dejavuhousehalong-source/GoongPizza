@@ -166,19 +166,6 @@ useEffect(() => {
     </button>
   )
 })}
-                onClick={() => setSelectedTable(t)}
-                disabled={bookedTables.includes(t)}
-                className={
-                  bookedTables.includes(t)
-                    ? 'table disabled'
-                    : selectedTable === t
-                    ? 'table active'
-                    : 'table'
-                }
-              >
-                Bàn {t}
-              </button>
-            ))}
           </div>
         </div>
       ))}
