@@ -165,7 +165,26 @@ useEffect(() => {
         />
         <div className="time-grid">
   {timeSlots.map(t => {
-const isDisabled = false
+<div className="time-grid">
+  {timeSlots.map(t => {
+    // disable nếu tất cả bàn đều đã đặt ở slot t
+    const isDisabled = Object.values(areas)
+      .flat()
+      .every(table => bookedTables.includes(`${table}-${t}`))
+
+    return (
+      <button
+        key={t}
+        onClick={() => setTime(t)}
+        disabled={isDisabled}
+        className={isDisabled ? 'time disabled' : time === t ? 'time active' : 'time'}
+      >
+        {t}
+      </button>
+    )
+  })}
+</div>
+
     return (
       <button
         key={t}
