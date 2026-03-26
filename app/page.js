@@ -50,8 +50,8 @@ const areas = {
       .from('reservations')
       .select('*')
       .eq('date', date)
-      .eq('time', time)
-
+.gte('time', time)
+.lte('time', addMinutes(time, 89))
     setBookedTables(data?.map(d => d.table_number) || [])
   }
 
