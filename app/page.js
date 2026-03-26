@@ -8,6 +8,7 @@ const supabase = createClient(
   'sb_publishable_ZCs9awg61ilMjl2TP-ZTxg_RW9DZqbH'
 )
 
+// Hàm tạo các slot thời gian
 function generateTimeSlots(start, end, step) {
   const times = []
   let [h, m] = start.split(':').map(Number)
@@ -18,22 +19,10 @@ function generateTimeSlots(start, end, step) {
     m += step
     if (m >= 60) {
       h += Math.floor(m / 60)
-      m = m % 60
+      m %= 60
     }
   }
   return times
-}
-
-function addMinutes(time, mins) {
-  const [h, m] = time.split(':').map(Number)
-  const date = new Date()
-  date.setHours(h)
-  date.setMinutes(m + mins)
-
-  const hh = String(date.getHours()).padStart(2, '0')
-  const mm = String(date.getMinutes()).padStart(2, '0')
-
-  return `${hh}:${mm}`
 }
 
 const timeSlots = generateTimeSlots("11:00", "20:30", 30)
@@ -48,6 +37,7 @@ export default function Home() {
   const [selectedTable, setSelectedTable] = useState(null)
   const [success, setSuccess] = useState(false)
 
+  // Cấu hình bàn
   const tablesConfig = {
     1: { min: 2, max: 4 },
     2: { min: 2, max: 4 },
@@ -63,16 +53,19 @@ export default function Home() {
     12: { min: 2, max: 4 }
   }
 
+  // Các khu vực
   const areas = {
     'Tầng 1': Array.from({ length: 8 }, (_, i) => i + 1),
     'Tầng 5': Array.from({ length: 4 }, (_, i) => i + 9)
   }
 
+  // Fetch bookings khi chọn ngày
   useEffect(() => {
-    if (date && time) fetchBookings()
-  }, [date, time])
+    if (date) fetchBookings()
+  }, [date])
 
   async function fetchBookings() {
+    if (!date) return
     const { data } = await supabase
       .from('reservations')
       .select('*')
@@ -90,7 +83,6 @@ export default function Home() {
         const [th, tm] = t.split(':').map(Number)
         const slotTime = new Date()
         slotTime.setHours(th, tm, 0, 0)
-
         if (slotTime >= bookingStart && slotTime < bookingEnd) {
           blockedTables.push(`${d.table_number}-${t}`)
         }
@@ -100,35 +92,29 @@ export default function Home() {
     setBookedTables([...new Set(blockedTables)])
   }
 
-  // 🔥 Auto chọn bàn theo số khách
+  // Auto chọn bàn theo số khách
   useEffect(() => {
-    if (!guests) return
+    if (!guests || !time) return
     const guestCount = Number(guests)
 
     const available = Object.values(areas)
       .flat()
       .filter(t => {
         const config = tablesConfig[t] || {}
-        return (
-          !bookedTables.some(bt => bt.startsWith(`${t}-`)) &&
-          guestCount >= (config.min || 1) &&
-          guestCount <= (config.max || 99)
-        )
+        const isBooked = bookedTables.includes(`${t}-${time}`)
+        return !isBooked && guestCount >= (config.min || 1) && guestCount <= (config.max || 99)
       })
 
-    if (available.length > 0) {
-      setSelectedTable(available[0])
-    } else {
-      setSelectedTable(null)
-    }
-  }, [guests, bookedTables])
+    setSelectedTable(available.length > 0 ? available[0] : null)
+  }, [guests, bookedTables, time])
 
   async function handleBooking() {
-    if (!selectedTable) return
+    if (!selectedTable || !time) return
 
     const { error } = await supabase.from('reservations').insert([
       { name, phone, guests: Number(guests), date, time, table_number: selectedTable }
     ])
+
     if (!error) {
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
@@ -136,9 +122,15 @@ export default function Home() {
     }
   }
 
+  // Kiểm tra slot thời gian có disable không
+  const isSlotDisabled = (slot) => {
+    // slot disable nếu tất cả bàn đều đã bị đặt cho slot đó
+    const allBooked = Object.values(areas).flat().every(t => bookedTables.includes(`${t}-${slot}`))
+    return allBooked
+  }
+
   return (
     <div style={{ padding: 20 }}>
-      {/* FORM */}
       <div className="booking-box">
         <h2>Thông tin đặt bàn</h2>
 
@@ -146,26 +138,20 @@ export default function Home() {
           type="text"
           placeholder="Chọn ngày"
           value={date}
-          onFocus={(e) => e.target.type = 'date'}
-          onChange={(e) => setDate(e.target.value)}
-          onBlur={(e) => { if (!date) e.target.type = 'text' }}
+          onFocus={e => e.target.type = 'date'}
+          onChange={e => setDate(e.target.value)}
+          onBlur={e => { if (!date) e.target.type = 'text' }}
         />
 
         <div className="time-grid">
           {timeSlots.map(t => {
-            const isDisabled = bookedTables.some(bt => bt.endsWith(`-${t}`))
+            const disabled = isSlotDisabled(t)
             return (
               <button
                 key={t}
-                onClick={() => setTime(t)}
-                disabled={isDisabled}
-                className={
-                  isDisabled
-                    ? 'time disabled'
-                    : time === t
-                    ? 'time active'
-                    : 'time'
-                }
+                onClick={() => !disabled && setTime(t)}
+                disabled={disabled}
+                className={disabled ? 'time disabled' : time === t ? 'time active' : 'time'}
               >
                 {t}
               </button>
@@ -173,16 +159,17 @@ export default function Home() {
           })}
         </div>
 
-        <input placeholder="Tên" onChange={e => setName(e.target.value)} />
-        <input placeholder="SĐT" onChange={e => setPhone(e.target.value)} />
+        <input placeholder="Tên" value={name} onChange={e => setName(e.target.value)} />
+        <input placeholder="SĐT" value={phone} onChange={e => setPhone(e.target.value)} />
         <input
           type="number"
           placeholder="Số khách"
+          value={guests}
           onChange={e => setGuests(e.target.value)}
         />
       </div>
 
-      {/* CHỌN BÀN */}
+      {/* Chọn bàn */}
       {Object.entries(areas).map(([areaName, tables]) => (
         <div key={areaName} style={{ marginTop: 30 }}>
           <h3>{areaName}</h3>
@@ -190,24 +177,16 @@ export default function Home() {
             {tables.map(t => {
               const config = tablesConfig[t] || { min: 1, max: 99 }
               const guestCount = Number(guests)
-              const notEnoughGuests = guests && guestCount < config.min
-              const tooManyGuests = guests && guestCount > config.max
-              const isInvalid = notEnoughGuests || tooManyGuests
-              const isBooked = bookedTables.some(bt => bt.startsWith(`${t}-`))
+              const notEnough = guests && guestCount < config.min
+              const tooMany = guests && guestCount > config.max
+              const isInvalid = notEnough || tooMany
+              const isBooked = time ? bookedTables.includes(`${t}-${time}`) : false
               return (
                 <button
                   key={t}
                   onClick={() => setSelectedTable(t)}
                   disabled={isInvalid || isBooked}
-                  className={
-                    isBooked
-                      ? 'table disabled'
-                      : selectedTable === t
-                      ? 'table active'
-                      : isInvalid
-                      ? 'table disabled'
-                      : 'table'
-                  }
+                  className={isBooked ? 'table disabled' : selectedTable === t ? 'table active' : isInvalid ? 'table disabled' : 'table'}
                 >
                   Bàn {t}
                   <div style={{ fontSize: 12 }}>
@@ -220,14 +199,8 @@ export default function Home() {
         </div>
       ))}
 
-      {/* HIỂN THỊ ĐÃ CHỌN */}
-      {selectedTable && (
-        <p className="selected">
-          ✅ Bạn đã chọn: Bàn {selectedTable}
-        </p>
-      )}
+      {selectedTable && <p className="selected">✅ Bạn đã chọn: Bàn {selectedTable}</p>}
 
-      {/* 🔥 NÚT STICKY */}
       <div className="sticky-book">
         <button
           className="btn-book"
@@ -238,12 +211,7 @@ export default function Home() {
         </button>
       </div>
 
-      {/* 🔥 POPUP SUCCESS */}
-      {success && (
-        <div className="popup">
-          ✅ Đặt bàn thành công!
-        </div>
-      )}
+      {success && <div className="popup">✅ Đặt bàn thành công!</div>}
     </div>
   )
 }
