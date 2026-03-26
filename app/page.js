@@ -57,7 +57,8 @@ export default function Home() {
       <div className="booking-box">
         <h2>🍕 Thông tin đặt bàn</h2>
 
-        <input type="date" onChange={e => setDate(e.target.value)} />
+        <label>Chọn ngày</label>
+<input type="date" onChange={e => setDate(e.target.value)} />
 
         <select onChange={e => setTime(e.target.value)}>
           <option value="">Chọn giờ</option>
