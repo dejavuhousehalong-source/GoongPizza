@@ -213,3 +213,149 @@ body {
   color: #999;
   cursor: not-allowed;
 }
+/* === BOX FORM ĐẶT BÀN === */
+.booking-box {
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 600px;
+  margin-bottom: 20px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.booking-box h2 {
+  margin-bottom: 15px;
+  font-size: 20px;
+  color: #333;
+}
+
+.booking-box input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+/* === TIME SLOT === */
+.time-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.time {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #888;
+  cursor: pointer;
+  background: #f0f0f0;
+  transition: all 0.2s ease;
+}
+
+.time.active {
+  background: #4caf50;
+  color: #fff;
+  border-color: #4caf50;
+}
+
+.time.disabled {
+  background: #ddd;
+  color: #999;
+  cursor: not-allowed;
+  border-color: #ccc;
+}
+
+/* === TABLE BUTTONS === */
+.table {
+  width: 80px;
+  height: 80px;
+  margin: 5px;
+  border-radius: 12px;
+  border: 1px solid #888;
+  cursor: pointer;
+  background: #f9f9f9;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.table.active {
+  background: #2196f3;
+  color: #fff;
+  border-color: #2196f3;
+}
+
+.table.disabled {
+  background: #ddd;
+  color: #999;
+  cursor: not-allowed;
+  border-color: #ccc;
+}
+
+.table div {
+  position: absolute;
+  bottom: 4px;
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  color: #555;
+}
+
+/* === SELECTED INFO === */
+.selected {
+  margin-top: 15px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #4caf50;
+}
+
+/* === STICKY BOOK BUTTON === */
+.sticky-book {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 10px 0;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.btn-book {
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 12px;
+  background: #ff5722;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-book:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* === POPUP SUCCESS === */
+.popup {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #4caf50;
+  color: #fff;
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 1000;
+  animation: fadeInOut 3s forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px);}
+  10% { opacity: 1; transform: translateY(0);}
+  90% { opacity: 1; transform: translateY(0);}
+  100% { opacity: 0; transform: translateY(-10px);}
+}
