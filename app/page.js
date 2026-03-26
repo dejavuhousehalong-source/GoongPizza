@@ -208,7 +208,7 @@ const isDisabled = false
     <button
       key={t}
       onClick={() => setSelectedTable(t)}
-      disabled={bookedTables.includes(t) || isInvalid}
+      disabled={bookedTables.includes(`${t}-${time}`) || isInvalid}
       className={
         bookedTables.includes(t)
           ? 'table disabled'
