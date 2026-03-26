@@ -23,6 +23,20 @@ export default function Home() {
   const [success, setSuccess] = useState(false)
 
   const areas = {
+    const tablesConfig = {
+  1: { min: 2, max: 4 },
+  2: { min: 2, max: 4 },
+  3: { min: 4, max: 8 },
+  4: { min: 2, max: 4 },
+  5: { min: 2, max: 4 },
+  6: { min: 2, max: 4 },
+  7: { min: 2, max: 4 },
+  8: { min: 3, max: 6 },
+  9: { min: 2, max: 4 },
+  10: { min: 2, max: 4 },
+  11: { min: 2, max: 4 },
+  12: { min: 2, max: 4 }
+}
     'Tầng 1': Array.from({ length: 8 }, (_, i) => i + 1),
     'Tầng 5': Array.from({ length: 4 }, (_, i) => i + 9)
   }
