@@ -82,7 +82,6 @@ useEffect(() => {
     const { error } = await supabase.from('reservations').insert([
       { name, phone, guests, date, time, table_number: selectedTable }
     ])
-
     if (!error) {
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
@@ -92,8 +91,6 @@ useEffect(() => {
 
   return (
     <div style={{ padding: 20 }}>
-      <h1>Đặt bàn nhà hàng</h1>
-
       {/* FORM */}
       <div className="booking-box">
         <h2>Thông tin đặt bàn</h2>
@@ -108,7 +105,6 @@ useEffect(() => {
             if (!date) e.target.type = 'text'
           }}
         />
-
         {/* 🔥 Chọn giờ dạng button */}
         <div className="time-grid">
           {timeSlots.map(t => (
@@ -121,7 +117,6 @@ useEffect(() => {
             </button>
           ))}
         </div>
-
         <input placeholder="Tên" onChange={e => setName(e.target.value)} />
         <input placeholder="SĐT" onChange={e => setPhone(e.target.value)} />
         <input
@@ -130,7 +125,6 @@ useEffect(() => {
           onChange={e => setGuests(e.target.value)}
         />
       </div>
-
       {/* CHỌN BÀN */}
       {Object.entries(areas).map(([areaName, tables]) => (
         <div key={areaName} style={{ marginTop: 30 }}>
@@ -143,7 +137,6 @@ useEffect(() => {
   const notEnoughGuests = guests && guests < config.min
   const tooManyGuests = guests && guests > config.max
   const isInvalid = notEnoughGuests || tooManyGuests
-
   return (
     <button
       key={t}
@@ -169,14 +162,12 @@ useEffect(() => {
           </div>
         </div>
       ))}
-
       {/* HIỂN THỊ ĐÃ CHỌN */}
       {selectedTable && (
         <p className="selected">
           ✅ Bạn đã chọn: Bàn {selectedTable}
         </p>
       )}
-
       {/* 🔥 NÚT STICKY */}
       <div className="sticky-book">
         <button
@@ -187,7 +178,6 @@ useEffect(() => {
           🍕 Xác nhận đặt bàn
         </button>
       </div>
-
       {/* 🔥 POPUP SUCCESS */}
       {success && (
         <div className="popup">
