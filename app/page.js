@@ -131,8 +131,11 @@ useEffect(() => {
         />
         <div className="time-grid">
   {timeSlots.map(t => {
-    const isDisabled = bookedTables.length > 0 && t !== time
-
+const isDisabled =
+  time &&
+  t >= time &&
+  t <= addMinutes(time, 89) &&
+  t !== time
     return (
       <button
         key={t}
