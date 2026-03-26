@@ -117,7 +117,26 @@ useEffect(() => {
         />
         {/* 🔥 Chọn giờ dạng button */}
         <div className="time-grid">
-          {timeSlots.map(t => (
+         {timeSlots.map(t => {
+  const isDisabled = bookedTables.length > 0 && t !== time
+
+  return (
+    <button
+      key={t}
+      onClick={() => setTime(t)}
+      disabled={isDisabled}
+      className={
+        isDisabled
+          ? 'time disabled'
+          : time === t
+          ? 'time active'
+          : 'time'
+      }
+    >
+      {t}
+    </button>
+  )
+})}
             <button
               key={t}
               onClick={() => setTime(t)}
