@@ -13,6 +13,23 @@ function generateTimeSlots(start, end, step) {
   const [endH, endM] = end.split(':').map(Number)
 
   while (h < endH || (h === endH && m <= endM)) {
+    times.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+    m += step
+    if (m >= 60) {
+      h += Math.floor(m / 60)
+      m = m % 60
+    }
+  }
+  return times
+}
+
+const timeSlots = generateTimeSlots("11:00", "20:30", 30)
+function generateTimeSlots(start, end, step) {
+  const times = []
+  let [h, m] = start.split(':').map(Number)
+  const [endH, endM] = end.split(':').map(Number)
+
+  while (h < endH || (h === endH && m <= endM)) {
     times.push(
       `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
     )
@@ -81,23 +98,20 @@ async function fetchBookings() {
     const [h, m] = d.time.split(':').map(Number)
     const bookingStart = new Date()
     bookingStart.setHours(h, m, 0, 0)
-
-    // thời gian kết thúc booking (sau 89 phút)
-    const bookingEnd = new Date(bookingStart.getTime() + 89 * 60 * 1000)
+    const bookingEnd = new Date(bookingStart.getTime() + 89 * 60 * 1000) // 89 phút
 
     timeSlots.forEach(t => {
       const [th, tm] = t.split(':').map(Number)
       const slotTime = new Date()
       slotTime.setHours(th, tm, 0, 0)
 
-      // chỉ khóa nếu slotTime < bookingEnd
       if (slotTime >= bookingStart && slotTime < bookingEnd) {
-        blockedTables.push(d.table_number + '-' + t)
+        blockedTables.push(`${d.table_number}-${t}`)
       }
     })
   })
 
-  setBookedTables([...new Set(blockedTables)])
+  setBookedTables(blockedTables)
 }
   // 🔥 Auto chọn bàn theo số khách
 useEffect(() => {
