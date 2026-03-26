@@ -187,3 +187,15 @@ h2 {
   text-align: center;
   font-weight: 600;
 }
+.popup {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 30px;
+  font-size: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
