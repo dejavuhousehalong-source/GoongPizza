@@ -22,10 +22,8 @@ function generateTimeSlots(start, end, step) {
       m = m % 60
     }
   }
-
   return times
 }
-
 const timeSlots = generateTimeSlots("11:00", "20:30", 30)
 
 export default function Home() {
@@ -152,16 +150,7 @@ useEffect(() => {
       </button>
     )
   })}
-</div>
-            <button
-              key={t}
-              onClick={() => setTime(t)}
-              className={time === t ? 'time active' : 'time'}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+
         <input placeholder="Tên" onChange={e => setName(e.target.value)} />
         <input placeholder="SĐT" onChange={e => setPhone(e.target.value)} />
         <input
