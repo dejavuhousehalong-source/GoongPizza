@@ -8,7 +8,6 @@ const supabase = createClient(
   'sb_publishable_ZCs9awg61ilMjl2TP-ZTxg_RW9DZqbH'
 )
 
-// Hàm tạo các slot thời gian
 function generateTimeSlots(start, end, step) {
   const times = []
   let [h, m] = start.split(':').map(Number)
@@ -33,7 +32,7 @@ export default function Home() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [guests, setGuests] = useState('')
-  const [blockedTableSlots, setBlockedTableSlots] = useState([]) // chứa table-slot riêng
+  const [blockedTableSlots, setBlockedTableSlots] = useState([])
   const [selectedTable, setSelectedTable] = useState(null)
   const [success, setSuccess] = useState(false)
 
@@ -57,7 +56,6 @@ export default function Home() {
     'Tầng 5': Array.from({ length: 4 }, (_, i) => i + 9)
   }
 
-  // Fetch bookings khi chọn ngày
   useEffect(() => {
     if (date) fetchBookings()
   }, [date])
@@ -74,7 +72,7 @@ export default function Home() {
     data?.forEach(d => {
       const startIndex = timeSlots.indexOf(d.time)
       if (startIndex !== -1) {
-        // khóa khung giờ của bàn đó và 2 slot tiếp theo (tổng 3 slot)
+        // Khóa bàn đó slot đặt + 2 slot tiếp theo
         for (let i = startIndex; i < startIndex + 3 && i < timeSlots.length; i++) {
           blocked.push(`${d.table_number}-${timeSlots[i]}`)
         }
@@ -84,11 +82,10 @@ export default function Home() {
     setBlockedTableSlots([...new Set(blocked)])
   }
 
-  // Auto chọn bàn theo số khách và slot đang chọn
+  // Auto chọn bàn theo số khách + slot hiện tại
   useEffect(() => {
     if (!guests || !time) return
     const guestCount = Number(guests)
-
     const available = Object.values(areas)
       .flat()
       .filter(t => {
@@ -96,17 +93,14 @@ export default function Home() {
         const isBlocked = blockedTableSlots.includes(`${t}-${time}`)
         return !isBlocked && guestCount >= (config.min || 1) && guestCount <= (config.max || 99)
       })
-
     setSelectedTable(available.length > 0 ? available[0] : null)
   }, [guests, blockedTableSlots, time])
 
   async function handleBooking() {
     if (!selectedTable || !time) return
-
     const { error } = await supabase.from('reservations').insert([
       { name, phone, guests: Number(guests), date, time, table_number: selectedTable }
     ])
-
     if (!error) {
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
@@ -114,7 +108,6 @@ export default function Home() {
     }
   }
 
-  // Check xem slot thời gian của bàn có bị khóa không
   const isTableSlotBlocked = (table, slot) => blockedTableSlots.includes(`${table}-${slot}`)
 
   return (
@@ -132,19 +125,20 @@ export default function Home() {
         />
 
         <div className="time-grid">
-          {timeSlots.map(t => {
-            // slot disable nếu tất cả bàn đều đã block slot đó
+          {timeSlots.map(slot => {
+            // Check nếu tất cả bàn đều bị khóa slot này
             const allBlocked = Object.values(areas)
               .flat()
-              .every(table => blockedTableSlots.includes(`${table}-${t}`))
+              .every(table => isTableSlotBlocked(table, slot))
+
             return (
               <button
-                key={t}
-                onClick={() => !allBlocked && setTime(t)}
+                key={slot}
+                onClick={() => !allBlocked && setTime(slot)}
                 disabled={allBlocked}
-                className={allBlocked ? 'time disabled' : time === t ? 'time active' : 'time'}
+                className={allBlocked ? 'time disabled' : time === slot ? 'time active' : 'time'}
               >
-                {t}
+                {slot}
               </button>
             )
           })}
@@ -160,7 +154,6 @@ export default function Home() {
         />
       </div>
 
-      {/* Chọn bàn */}
       {Object.entries(areas).map(([areaName, tables]) => (
         <div key={areaName} style={{ marginTop: 30 }}>
           <h3>{areaName}</h3>
