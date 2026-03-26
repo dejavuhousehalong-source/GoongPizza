@@ -32,7 +32,7 @@ export default function Home() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [guests, setGuests] = useState('')
-  const [blockedSlots, setBlockedSlots] = useState([]) // Slot xám, không chọn được
+  const [bookedTableSlots, setBookedTableSlots] = useState({}) // { table_number: [slots...], ... }
   const [selectedTable, setSelectedTable] = useState(null)
   const [success, setSuccess] = useState(false)
 
@@ -52,18 +52,20 @@ export default function Home() {
   async function fetchBookings() {
     if(!date) return
     const { data } = await supabase.from('reservations').select('*').eq('date', date)
-    const blocked = []
+    const booked = {}
 
     data?.forEach(d=>{
       const startIndex = timeSlots.indexOf(d.time)
       if(startIndex!==-1){
-        // Khóa slot đặt + 2 slot tiếp theo
+        const slots = []
         for(let i=startIndex;i<startIndex+3 && i<timeSlots.length;i++){
-          if(!blocked.includes(timeSlots[i])) blocked.push(timeSlots[i])
+          slots.push(timeSlots[i])
         }
+        booked[d.table_number] = booked[d.table_number] ? [...booked[d.table_number], ...slots] : slots
       }
     })
-    setBlockedSlots(blocked)
+
+    setBookedTableSlots(booked)
   }
 
   async function handleBooking() {
@@ -86,22 +88,6 @@ export default function Home() {
         onChange={e=>setDate(e.target.value)}
         onBlur={e=>{if(!date)e.target.type='text'}}
       />
-      <div className="time-grid">
-        {timeSlots.map(slot=>{
-          const isBlocked = blockedSlots.includes(slot)
-          return (
-            <button
-              key={slot}
-              onClick={()=>!isBlocked && setTime(slot)}
-              disabled={isBlocked}
-              className={isBlocked ? 'time disabled' : time===slot ? 'time active' : 'time'}
-            >
-              {slot}
-            </button>
-          )
-        })}
-      </div>
-
       <input placeholder="Tên" value={name} onChange={e=>setName(e.target.value)} />
       <input placeholder="SĐT" value={phone} onChange={e=>setPhone(e.target.value)} />
       <input type="number" placeholder="Số khách" value={guests} onChange={e=>setGuests(e.target.value)} />
@@ -115,27 +101,39 @@ export default function Home() {
               const guestCount = Number(guests)
               const isInvalid = guests && (guestCount<config.min || guestCount>config.max)
               return (
-                <button
-                  key={t}
-                  onClick={()=>setSelectedTable(t)}
-                  disabled={isInvalid}
-                  className={selectedTable===t?'table active':isInvalid?'table disabled':'table'}
-                >
-                  Bàn {t} <div style={{fontSize:12}}>{config.min}-{config.max} khách</div>
-                </button>
+                <div key={t} style={{margin:5}}>
+                  <div>Bàn {t} ({config.min}-{config.max} khách)</div>
+                  <div style={{display:'flex', flexWrap:'wrap'}}>
+                    {timeSlots.map(slot=>{
+                      const isBlocked = bookedTableSlots[t]?.includes(slot)
+                      const isSelected = selectedTable===t && time===slot
+                      return (
+                        <button
+                          key={slot}
+                          onClick={()=>!isBlocked && setSelectedTable(t) && setTime(slot)}
+                          disabled={isBlocked || isInvalid}
+                          className={isBlocked ? 'time disabled' : isSelected ? 'time active' : 'time'}
+                          style={{margin:2, minWidth:60}}
+                        >
+                          {slot}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               )
             })}
           </div>
         </div>
       ))}
 
-      {selectedTable && <p className="selected">✅ Bạn đã chọn: Bàn {selectedTable}</p>}
+      {selectedTable && <p className="selected">✅ Bạn đã chọn: Bàn {selectedTable} - {time}</p>}
 
       <div className="sticky-book">
         <button
           className="btn-book"
           onClick={handleBooking}
-          disabled={!date||!time||!name||!phone||!guests||!selectedTable||blockedSlots.includes(time)}
+          disabled={!date||!time||!name||!phone||!guests||!selectedTable}
         >
           🍕 Xác nhận đặt bàn
         </button>
