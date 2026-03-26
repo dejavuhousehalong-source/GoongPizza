@@ -129,9 +129,35 @@ const areas = {
           <h3>{areaName}</h3>
 
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-            {tables.map(t => (
-              <button
-                key={t}
+{tables.map(t => {
+  const config = tablesConfig[t] || { min: 1, max: 99 }
+
+  const notEnoughGuests = guests && guests < config.min
+  const tooManyGuests = guests && guests > config.max
+  const isInvalid = notEnoughGuests || tooManyGuests
+
+  return (
+    <button
+      key={t}
+      onClick={() => setSelectedTable(t)}
+      disabled={bookedTables.includes(t) || isInvalid}
+      className={
+        bookedTables.includes(t)
+          ? 'table disabled'
+          : selectedTable === t
+          ? 'table active'
+          : isInvalid
+          ? 'table disabled'
+          : 'table'
+      }
+    >
+      Bàn {t}
+      <div style={{ fontSize: 12 }}>
+        {config.min} - {config.max} khách
+      </div>
+    </button>
+  )
+})}
                 onClick={() => setSelectedTable(t)}
                 disabled={bookedTables.includes(t)}
                 className={
