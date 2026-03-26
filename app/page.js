@@ -55,7 +55,7 @@ export default function Home() {
 
       {/* FORM ĐẶT BÀN */}
       <div className="booking-box">
-        <h2>🍕 Đặt bàn ngay</h2>
+        <h2>🍕 Thông tin đặt bàn</h2>
 
         <input type="date" onChange={e => setDate(e.target.value)} />
 
