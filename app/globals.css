@@ -78,27 +78,20 @@ body {
 }
 
 .time {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  background: white;
-  cursor: pointer;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 6px;
 }
-
 .time.active {
   background: #e63946;
   color: white;
 }
-
 .table {
-  margin: 6px;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  background: white;
-  cursor: pointer;
+  margin: 5px;
+  padding: 10px;
+  min-width: 55px;
+  font-size: 13px;
 }
-
 .table.active {
   border: 2px solid #e63946;
   background: #ffeaea;
