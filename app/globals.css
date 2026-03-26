@@ -18,7 +18,6 @@
     --foreground: #ededed;
   }
 }
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -79,7 +78,6 @@ body {
   gap: 8px;
   margin-top: 10px;
 }
-
 .time {
   padding: 6px 10px;
   font-size: 13px;
@@ -99,28 +97,23 @@ body {
   font-size: 13px;
   transition: all 0.2s ease;
 }
-
 .table:hover {
   transform: translateY(-2px);
 }
-
 .table.active {
   border: 2px solid #e63946;
   background: #fff5f5;
   transform: scale(1.05);
 }
-
 .table.disabled {
   background: #f0f0f0;
   color: #999;
 }
-
 .selected {
   margin-top: 10px;
   font-weight: bold;
   color: #e63946;
 }
-
 /* Sticky button */
 .sticky-book {
   position: sticky;
@@ -128,7 +121,6 @@ body {
   background: white;
   padding: 10px;
 }
-
 /* Popup */
 .popup {
   position: fixed;
@@ -149,7 +141,6 @@ body {
   background: #fafafa;
   transition: all 0.2s ease;
 }
-
 .booking-box input:focus,
 .booking-box select:focus {
   outline: none;
@@ -165,11 +156,9 @@ body {
   font-size: 13px;
   transition: all 0.2s ease;
 }
-
 .time:hover {
   border-color: #e63946;
 }
-
 .time.active {
   background: #e63946;
   color: white;
@@ -181,7 +170,6 @@ h1 {
   font-size: 22px;
   margin-bottom: 10px;
 }
-
 h2 {
   font-size: 16px;
   text-align: center;
