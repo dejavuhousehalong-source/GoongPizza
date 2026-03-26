@@ -56,18 +56,26 @@ const areas = {
   }
 
   // 🔥 Auto chọn bàn theo số khách
-  useEffect(() => {
-    if (!guests) return
+useEffect(() => {
+  if (!guests) return
 
-    const available = Object.values(areas).flat().filter(
-      t => !bookedTables.includes(t)
-    )
+  const available = Object.values(areas)
+    .flat()
+    .filter(t => {
+      const config = tablesConfig[t] || {}
+      return (
+        !bookedTables.includes(t) &&
+        guests >= (config.min || 1) &&
+        guests <= (config.max || 99)
+      )
+    })
 
-    if (available.length > 0) {
-      setSelectedTable(available[0])
-    }
-  }, [guests, bookedTables])
-
+  if (available.length > 0) {
+    setSelectedTable(available[0])
+  } else {
+    setSelectedTable(null)
+  }
+}, [guests, bookedTables])
   async function handleBooking() {
     if (!selectedTable) return
 
