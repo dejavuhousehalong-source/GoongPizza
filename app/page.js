@@ -8,6 +8,10 @@ const supabase = createClient(
   'sb_publishable_ZCs9awg61ilMjl2TP-ZTxg_RW9DZqbH'
 )
 
+const timeSlots = [
+  "11:00","12:30","14:00","15:30","17:00","18:30","20:00"
+]
+
 export default function Home() {
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
@@ -16,6 +20,7 @@ export default function Home() {
   const [guests, setGuests] = useState('')
   const [bookedTables, setBookedTables] = useState([])
   const [selectedTable, setSelectedTable] = useState(null)
+  const [success, setSuccess] = useState(false)
 
   const areas = {
     'Tầng 1': Array.from({ length: 8 }, (_, i) => i + 1),
@@ -36,15 +41,29 @@ export default function Home() {
     setBookedTables(data?.map(d => d.table_number) || [])
   }
 
+  // 🔥 Auto chọn bàn theo số khách
+  useEffect(() => {
+    if (!guests) return
+
+    const available = Object.values(areas).flat().filter(
+      t => !bookedTables.includes(t)
+    )
+
+    if (available.length > 0) {
+      setSelectedTable(available[0])
+    }
+  }, [guests, bookedTables])
+
   async function handleBooking() {
-    if (!selectedTable) return alert('Chọn bàn')
+    if (!selectedTable) return
 
     const { error } = await supabase.from('reservations').insert([
       { name, phone, guests, date, time, table_number: selectedTable }
     ])
 
     if (!error) {
-      alert('Đặt bàn thành công!')
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
       fetchBookings()
     }
   }
@@ -53,33 +72,33 @@ export default function Home() {
     <div style={{ padding: 20 }}>
       <h1>Đặt bàn nhà hàng</h1>
 
-      {/* FORM ĐẶT BÀN */}
+      {/* FORM */}
       <div className="booking-box">
-        <h2>🍕 Thông tin đặt bàn</h2>
-<input
-  type="text"
-  placeholder="Chọn ngày"
-  value={date}
-  onFocus={(e) => e.target.type = 'date'}
-  onChange={(e) => setDate(e.target.value)}
-  onBlur={(e) => {
-    if (!date) e.target.type = 'text'
-  }}
-/>
-        <select onChange={e => setTime(e.target.value)}>
-          <option value="">Chọn giờ</option>
-          {[
-            "11:00",
-            "12:30",
-            "14:00",
-            "15:30",
-            "17:00",
-            "18:30",
-            "20:00"
-          ].map(t => (
-            <option key={t} value={t}>{t}</option>
+        <h2>Thông tin đặt bàn</h2>
+
+        <input
+          type="text"
+          placeholder="Chọn ngày"
+          value={date}
+          onFocus={(e) => e.target.type = 'date'}
+          onChange={(e) => setDate(e.target.value)}
+          onBlur={(e) => {
+            if (!date) e.target.type = 'text'
+          }}
+        />
+
+        {/* 🔥 Chọn giờ dạng button */}
+        <div className="time-grid">
+          {timeSlots.map(t => (
+            <button
+              key={t}
+              onClick={() => setTime(t)}
+              className={time === t ? 'time active' : 'time'}
+            >
+              {t}
+            </button>
           ))}
-        </select>
+        </div>
 
         <input placeholder="Tên" onChange={e => setName(e.target.value)} />
         <input placeholder="SĐT" onChange={e => setPhone(e.target.value)} />
@@ -88,11 +107,9 @@ export default function Home() {
           placeholder="Số khách"
           onChange={e => setGuests(e.target.value)}
         />
-
-
       </div>
 
-      {/* KHU CHỌN BÀN */}
+      {/* CHỌN BÀN */}
       {Object.entries(areas).map(([areaName, tables]) => (
         <div key={areaName} style={{ marginTop: 30 }}>
           <h3>{areaName}</h3>
@@ -103,16 +120,13 @@ export default function Home() {
                 key={t}
                 onClick={() => setSelectedTable(t)}
                 disabled={bookedTables.includes(t)}
-                style={{
-                  margin: 5,
-                  padding: 10,
-                  background: bookedTables.includes(t)
-                    ? 'gray'
+                className={
+                  bookedTables.includes(t)
+                    ? 'table disabled'
                     : selectedTable === t
-                    ? 'orange'
-                    : 'green',
-                  color: 'white'
-                }}
+                    ? 'table active'
+                    : 'table'
+                }
               >
                 Bàn {t}
               </button>
@@ -120,16 +134,31 @@ export default function Home() {
           </div>
         </div>
       ))}
-    {/* NÚT ĐẶT BÀN CUỐI TRANG */}
-<div style={{ marginTop: 40 }}>
-  <button
-    className="btn-book"
-    onClick={handleBooking}
-    disabled={!date || !time || !name || !phone || !guests || !selectedTable}
-  >
-    🍕 Xác nhận đặt bàn
-  </button>
-</div>
+
+      {/* HIỂN THỊ ĐÃ CHỌN */}
+      {selectedTable && (
+        <p className="selected">
+          ✅ Bạn đã chọn: Bàn {selectedTable}
+        </p>
+      )}
+
+      {/* 🔥 NÚT STICKY */}
+      <div className="sticky-book">
+        <button
+          className="btn-book"
+          onClick={handleBooking}
+          disabled={!date || !time || !name || !phone || !guests || !selectedTable}
+        >
+          🍕 Xác nhận đặt bàn
+        </button>
       </div>
+
+      {/* 🔥 POPUP SUCCESS */}
+      {success && (
+        <div className="popup">
+          ✅ Đặt bàn thành công!
+        </div>
+      )}
+    </div>
   )
 }
