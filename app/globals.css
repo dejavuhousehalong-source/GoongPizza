@@ -148,3 +148,22 @@ body {
   border: 1px solid #e63946;
   box-shadow: 0 0 0 3px rgba(230,57,70,0.08);
 }
+.time {
+  padding: 7px 12px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.time:hover {
+  border-color: #e63946;
+}
+
+.time.active {
+  background: #e63946;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(230,57,70,0.3);
+}
