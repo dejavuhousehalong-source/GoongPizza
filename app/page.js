@@ -89,9 +89,7 @@ export default function Home() {
           onChange={e => setGuests(e.target.value)}
         />
 
-        <button className="btn-book" onClick={handleBooking}>
-          🍕 Đặt bàn ngay
-        </button>
+
       </div>
 
       {/* KHU CHỌN BÀN */}
@@ -122,6 +120,16 @@ export default function Home() {
           </div>
         </div>
       ))}
-    </div>
+    {/* NÚT ĐẶT BÀN CUỐI TRANG */}
+<div style={{ marginTop: 40 }}>
+  <button
+    className="btn-book"
+    onClick={handleBooking}
+    disabled={!date || !time || !name || !phone || !guests || !selectedTable}
+  >
+    🍕 Xác nhận đặt bàn
+  </button>
+</div>
+      </div>
   )
 }
