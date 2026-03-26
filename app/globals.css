@@ -199,3 +199,24 @@ h2 {
   font-size: 14px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.3);
 }
+body {
+  color: #222; /* đậm hơn */
+}
+.booking-box input,
+.booking-box select {
+  color: #111; /* chữ đậm */
+}
+::placeholder {
+  color: #666;
+  opacity: 1;
+}
+.selected {
+  color: #d62828; /* đậm hơn đỏ cũ */
+}
+.table.disabled {
+  background: #e0e0e0;
+  color: #555;
+}
+body {
+  -webkit-font-smoothing: antialiased;
+}
