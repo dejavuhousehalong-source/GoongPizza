@@ -22,8 +22,7 @@ export default function Home() {
   const [selectedTable, setSelectedTable] = useState(null)
   const [success, setSuccess] = useState(false)
 
-  const areas = {
-    const tablesConfig = {
+  const tablesConfig = {
   1: { min: 2, max: 4 },
   2: { min: 2, max: 4 },
   3: { min: 4, max: 8 },
@@ -37,10 +36,11 @@ export default function Home() {
   11: { min: 2, max: 4 },
   12: { min: 2, max: 4 }
 }
-    'Tầng 1': Array.from({ length: 8 }, (_, i) => i + 1),
-    'Tầng 5': Array.from({ length: 4 }, (_, i) => i + 9)
-  }
 
+const areas = {
+  'Tầng 1': Array.from({ length: 8 }, (_, i) => i + 1),
+  'Tầng 5': Array.from({ length: 4 }, (_, i) => i + 9)
+}
   useEffect(() => {
     if (date && time) fetchBookings()
   }, [date, time])
