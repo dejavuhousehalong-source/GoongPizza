@@ -75,24 +75,30 @@ async function fetchBookings() {
     .select('*')
     .eq('date', date)
 
-  const filtered = data?.filter(d => {
-    const [h1, m1] = d.time.split(':').map(Number)
-    const [h2, m2] = time.split(':').map(Number)
+  const blockedTables = []
 
+  data?.forEach(d => {
+    const [h, m] = d.time.split(':').map(Number)
     const bookingStart = new Date()
-    bookingStart.setHours(h1, m1, 0, 0)
-    const bookingEnd = new Date(bookingStart.getTime() + 90 * 60 * 1000)
+    bookingStart.setHours(h, m, 0, 0)
 
-    const selectedStart = new Date()
-    selectedStart.setHours(h2, m2, 0, 0)
-    const selectedEnd = new Date(selectedStart.getTime() + 90 * 60 * 1000)
+    // thời gian kết thúc booking (sau 89 phút)
+    const bookingEnd = new Date(bookingStart.getTime() + 89 * 60 * 1000)
 
-    return bookingStart < selectedEnd && bookingEnd > selectedStart
-  }) || []
+    timeSlots.forEach(t => {
+      const [th, tm] = t.split(':').map(Number)
+      const slotTime = new Date()
+      slotTime.setHours(th, tm, 0, 0)
 
-  setBookedTables(filtered.map(d => d.table_number))
+      // chỉ khóa nếu slotTime < bookingEnd
+      if (slotTime >= bookingStart && slotTime < bookingEnd) {
+        blockedTables.push(d.table_number + '-' + t)
+      }
+    })
+  })
+
+  setBookedTables([...new Set(blockedTables)])
 }
-
   // 🔥 Auto chọn bàn theo số khách
 useEffect(() => {
   if (!guests) return
