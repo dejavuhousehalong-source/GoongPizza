@@ -8,8 +8,8 @@ const supabase = createClient(
   'sb_publishable_ZCs9awg61ilMjl2TP-ZTxg_RW9DZqbH'
 )
 
-const timeSlots = [
-  "11:00","12:30","14:00","15:30","17:00","18:30","20:00"
+const timeSlots = generateTimeSlots("11:00", "20:30", 30)
+
 ]
 
 export default function Home() {
