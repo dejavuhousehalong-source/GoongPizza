@@ -57,11 +57,13 @@ export default function Home() {
       <div className="booking-box">
         <h2>🍕 Thông tin đặt bàn</h2>
 <input
-  type="date"
+  type="text"
   placeholder="Chọn ngày"
+  value={date}
   onFocus={(e) => e.target.type = 'date'}
+  onChange={(e) => setDate(e.target.value)}
   onBlur={(e) => {
-    if (!e.target.value) e.target.type = 'text'
+    if (!date) e.target.type = 'text'
   }}
 />
         <select onChange={e => setTime(e.target.value)}>
