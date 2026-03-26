@@ -8,7 +8,6 @@ const supabase = createClient(
   'sb_publishable_ZCs9awg61ilMjl2TP-ZTxg_RW9DZqbH'
 )
 
-// 🔥 Tạo các khung giờ
 function generateTimeSlots(start, end, step) {
   const times = []
   let [h, m] = start.split(':').map(Number)
@@ -38,18 +37,10 @@ export default function Home() {
   const [success, setSuccess] = useState(false)
 
   const tablesConfig = {
-    1: { min: 2, max: 4 },
-    2: { min: 2, max: 4 },
-    3: { min: 4, max: 8 },
-    4: { min: 2, max: 4 },
-    5: { min: 2, max: 4 },
-    6: { min: 2, max: 4 },
-    7: { min: 2, max: 4 },
-    8: { min: 3, max: 6 },
-    9: { min: 2, max: 4 },
-    10: { min: 2, max: 4 },
-    11: { min: 2, max: 4 },
-    12: { min: 2, max: 4 }
+    1: { min: 2, max: 4 }, 2: { min: 2, max: 4 }, 3: { min: 4, max: 8 },
+    4: { min: 2, max: 4 }, 5: { min: 2, max: 4 }, 6: { min: 2, max: 4 },
+    7: { min: 2, max: 4 }, 8: { min: 3, max: 6 }, 9: { min: 2, max: 4 },
+    10: { min: 2, max: 4 }, 11: { min: 2, max: 4 }, 12: { min: 2, max: 4 }
   }
 
   const areas = {
@@ -61,83 +52,52 @@ export default function Home() {
     if (date) fetchBookings()
   }, [date])
 
-  // 🔥 Hàm addMinutes
   function addMinutes(time, mins) {
     const [h, m] = time.split(':').map(Number)
     const date = new Date()
     date.setHours(h)
     date.setMinutes(m + mins)
-
     const hh = String(date.getHours()).padStart(2, '0')
     const mm = String(date.getMinutes()).padStart(2, '0')
     return `${hh}:${mm}`
   }
 
-  // 🔥 Lấy bàn đã đặt và khóa theo 89 phút
   async function fetchBookings() {
     const { data } = await supabase
       .from('reservations')
       .select('*')
       .eq('date', date)
 
-    const blockedTables = []
+    const blocked = []
 
     data?.forEach(d => {
       const [h, m] = d.time.split(':').map(Number)
       const bookingStart = new Date()
       bookingStart.setHours(h, m, 0, 0)
-      const bookingEnd = new Date(bookingStart.getTime() + 89 * 60 * 1000) // 89 phút
+      const bookingEnd = new Date(bookingStart.getTime() + 89 * 60 * 1000)
 
       timeSlots.forEach(t => {
         const [th, tm] = t.split(':').map(Number)
         const slotTime = new Date()
         slotTime.setHours(th, tm, 0, 0)
 
-        // chỉ khóa bàn nếu slotTime < bookingEnd
         if (slotTime >= bookingStart && slotTime < bookingEnd) {
-          blockedTables.push(`${d.table_number}-${t}`)
+          blocked.push(`${d.table_number}-${t}`)
         }
       })
     })
 
-    setBookedTables(blockedTables)
+    setBookedTables(blocked)
   }
 
-  // 🔥 Auto chọn bàn theo số khách
   useEffect(() => {
-    if (!guests) return
-
+    if (!guests || !time) return
     const available = Object.values(areas)
       .flat()
-      .filter(t => {
-        const config = tablesConfig[t] || {}
-        return (
-          !bookedTables.includes(`${t}-${time}`) &&
-          guests >= (config.min || 1) &&
-          guests <= (config.max || 99)
-        )
-      })
-
-    if (available.length > 0) {
-      setSelectedTable(available[0])
-    } else {
-      setSelectedTable(null)
-    }
+      .filter(t => !bookedTables.includes(`${t}-${time}`) && guests >= (tablesConfig[t].min) && guests <= (tablesConfig[t].max))
+    setSelectedTable(available.length > 0 ? available[0] : null)
   }, [guests, bookedTables, time])
 
-  // 🔥 Xử lý đặt bàn
   async function handleBooking() {
     if (!selectedTable || !time) return
-
-    const { error } = await supabase.from('reservations').insert([
-      { name, phone, guests, date, time, table_number: selectedTable }
-    ])
-
-    if (!error) {
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
-      fetchBookings()
-    }
-  }
-
-  ret
+    const { error } = await supabase.from('reservation
