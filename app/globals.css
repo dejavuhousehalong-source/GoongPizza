@@ -59,7 +59,8 @@ body {
 }
 .booking-box h2 {
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
+  font-size: 18px;
 }
 .booking-box input,
 .booking-box select {
