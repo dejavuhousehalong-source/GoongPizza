@@ -208,3 +208,8 @@ body {
 body {
   -webkit-font-smoothing: antialiased;
 }
+.time.disabled {
+  background: #eee;
+  color: #999;
+  cursor: not-allowed;
+}
