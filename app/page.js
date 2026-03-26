@@ -24,14 +24,14 @@ function generateTimeSlots(start, end, step) {
 const timeSlots = generateTimeSlots("11:00","20:30",30)
 
 export default function Home() {
-  const [date,setDate] = useState('')
-  const [time,setTime] = useState('')
-  const [name,setName] = useState('')
-  const [phone,setPhone] = useState('')
-  const [guests,setGuests] = useState('')
-  const [bookedTableSlots,setBookedTableSlots] = useState({}) // {table_number: [slots]}
-  const [selectedTable,setSelectedTable] = useState(null)
-  const [success,setSuccess] = useState(false)
+  const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [guests, setGuests] = useState('')
+  const [bookedTableSlots, setBookedTableSlots] = useState({}) // {table_number: [slots]}
+  const [selectedTable, setSelectedTable] = useState(null)
+  const [success, setSuccess] = useState(false)
 
   const tablesConfig = {
     1:{min:2,max:4},2:{min:2,max:4},3:{min:4,max:8},4:{min:2,max:4},
@@ -44,9 +44,19 @@ export default function Home() {
     'Tầng 5': Array.from({length:4},(_,i)=>i+9)
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     if(date) fetchBookings()
-  },[date])
+  }, [date])
+
+  function addMinutes(time, mins){
+    const [h,m] = time.split(':').map(Number)
+    const date = new Date()
+    date.setHours(h)
+    date.setMinutes(m + mins)
+    const hh = String(date.getHours()).padStart(2,'0')
+    const mm = String(date.getMinutes()).padStart(2,'0')
+    return `${hh}:${mm}`
+  }
 
   async function fetchBookings(){
     if(!date) return
@@ -59,16 +69,29 @@ export default function Home() {
         for(let i=startIndex;i<startIndex+3 && i<timeSlots.length;i++){
           slots.push(timeSlots[i])
         }
-        booked[d.table_number] = booked[d.table_number]? [...booked[d.table_number],...slots] : slots
+        booked[d.table_number] = booked[d.table_number]? [...booked[d.table_number], ...slots] : slots
       }
     })
     setBookedTableSlots(booked)
   }
 
+  // 🔥 Auto chọn bàn theo số khách
+  useEffect(()=>{
+    if(!guests) return
+    const available = Object.values(areas)
+      .flat()
+      .filter(t=>{
+        const config = tablesConfig[t]||{}
+        return !bookedTableSlots[t] && guests >= (config.min||1) && guests <= (config.max||99)
+      })
+    if(available.length>0) setSelectedTable(available[0])
+    else setSelectedTable(null)
+  }, [guests, bookedTableSlots])
+
   async function handleBooking(){
-    if(!selectedTable||!time) return
+    if(!selectedTable || !time) return
     const { error } = await supabase.from('reservations').insert([
-      {name,phone,guests:Number(guests),date,time,table_number:selectedTable}
+      { name, phone, guests: Number(guests), date, time, table_number: selectedTable }
     ])
     if(!error){
       setSuccess(true)
@@ -79,6 +102,7 @@ export default function Home() {
 
   return (
     <div style={{padding:20}}>
+      {/* FORM */}
       <div className="booking-box">
         <h2>Thông tin đặt bàn</h2>
         <input
@@ -91,39 +115,46 @@ export default function Home() {
         />
         <div className="time-grid">
           {timeSlots.map(t=>{
-            const isBlocked = bookedTableSlots[selectedTable]?.includes(t)
+            const isBlocked = selectedTable && bookedTableSlots[selectedTable]?.includes(t)
             return (
               <button
                 key={t}
                 onClick={()=>!isBlocked && setTime(t)}
                 disabled={isBlocked}
-                className={isBlocked?'time disabled':time===t?'time active':'time'}
+                className={isBlocked ? 'time disabled' : time===t ? 'time active' : 'time'}
               >
                 {t}
               </button>
             )
           })}
         </div>
-
-        <input placeholder="Tên" value={name} onChange={e=>setName(e.target.value)} />
-        <input placeholder="SĐT" value={phone} onChange={e=>setPhone(e.target.value)} />
-        <input type="number" placeholder="Số khách" value={guests} onChange={e=>setGuests(e.target.value)} />
+        <input placeholder="Tên" onChange={e=>setName(e.target.value)} />
+        <input placeholder="SĐT" onChange={e=>setPhone(e.target.value)} />
+        <input
+          type="number"
+          placeholder="Số khách"
+          onChange={e=>setGuests(e.target.value)}
+        />
       </div>
 
+      {/* CHỌN BÀN */}
       {Object.entries(areas).map(([areaName,tables])=>(
         <div key={areaName} style={{marginTop:30}}>
           <h3>{areaName}</h3>
           <div style={{display:'flex',flexWrap:'wrap'}}>
             {tables.map(t=>{
-              const config = tablesConfig[t]||{min:1,max:99}
-              const guestCount = Number(guests)
-              const isInvalid = guests && (guestCount<config.min||guestCount>config.max)
+              const config = tablesConfig[t] || {min:1,max:99}
+              const notEnoughGuests = guests && guests < config.min
+              const tooManyGuests = guests && guests > config.max
+              const isInvalid = notEnoughGuests || tooManyGuests
               return (
                 <button
                   key={t}
                   onClick={()=>setSelectedTable(t)}
                   disabled={isInvalid}
-                  className={selectedTable===t?'table active':isInvalid?'table disabled':'table'}
+                  className={
+                    selectedTable===t?'table active':isInvalid?'table disabled':'table'
+                  }
                 >
                   Bàn {t}
                   <div style={{fontSize:12}}>{config.min}-{config.max} khách</div>
@@ -134,18 +165,25 @@ export default function Home() {
         </div>
       ))}
 
-      {selectedTable && <p className="selected">✅ Bạn đã chọn: Bàn {selectedTable} - {time}</p>}
+      {/* HIỂN THỊ ĐÃ CHỌN */}
+      {selectedTable && time && (
+        <p className="selected">
+          ✅ Bạn đã chọn: Bàn {selectedTable} - {time}
+        </p>
+      )}
 
+      {/* 🔥 NÚT STICKY */}
       <div className="sticky-book">
         <button
           className="btn-book"
           onClick={handleBooking}
-          disabled={!date||!time||!name||!phone||!guests||!selectedTable}
+          disabled={!date || !time || !name || !phone || !guests || !selectedTable}
         >
           🍕 Xác nhận đặt bàn
         </button>
       </div>
 
+      {/* 🔥 POPUP SUCCESS */}
       {success && <div className="popup">✅ Đặt bàn thành công!</div>}
     </div>
   )
