@@ -150,7 +150,7 @@ useEffect(() => {
       </button>
     )
   })}
-
+</div>
         <input placeholder="Tên" onChange={e => setName(e.target.value)} />
         <input placeholder="SĐT" onChange={e => setPhone(e.target.value)} />
         <input
