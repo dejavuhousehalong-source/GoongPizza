@@ -33,8 +33,6 @@ export default function Home() {
   const [guests,setGuests] = useState('')
   const [name,setName] = useState('')
   const [phone,setPhone] = useState('')
-  const [email,setEmail] = useState('') // 🔥 NEW
-
   const [selectedTable,setSelectedTable] = useState(null)
 
   const [bookedTableSlots,setBookedTableSlots] = useState({})
@@ -92,7 +90,7 @@ export default function Home() {
 
   async function fetchBookings(){
     const {data} = await supabase
-      .from('reservations')
+      .from('reservations_public') // ✅ CHỈ SỬA DUY NHẤT DÒNG NÀY
       .select('*')
       .eq('date',date)
 
@@ -124,14 +122,14 @@ export default function Home() {
 
   const availableTables = getAvailableTables()
 
-  // ===== OTP (EMAIL VERSION) =====
+  // ===== OTP =====
   async function sendOtp(){
-    if(!email) return alert('Nhập email')
+    if(!phone) return alert('Nhập SĐT')
 
-    const res = await fetch('https://tbebsblirpqblimwzesr.supabase.co/functions/v1/send-otp-email',{
+    const res = await fetch('https://tbebsblirpqblimwzesr.supabase.co/functions/v1/send-otp',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ phone })
     })
 
     if(res.ok){
@@ -144,7 +142,7 @@ export default function Home() {
     const res = await fetch('https://tbebsblirpqblimwzesr.supabase.co/functions/v1/verify-otp',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ identifier: email, otp: otpCode })
+      body: JSON.stringify({ identifier: phone, otp: otpCode })
     })
 
     const data = await res.json()
@@ -162,6 +160,7 @@ export default function Home() {
 
     if(!selectedTable || !otpVerified) return
 
+    // check lại backend chống double booking
     const {data:check} = await supabase
       .from('reservations')
       .select('*')
@@ -176,7 +175,7 @@ export default function Home() {
     }
 
     const {error} = await supabase.from('reservations').insert([
-      {name,phone,email,guests:Number(guests),date,time,table_number:selectedTable}
+      {name,phone,guests:Number(guests),date,time,table_number:selectedTable}
     ])
 
     if(!error){
@@ -202,15 +201,22 @@ export default function Home() {
         <h2>Thông tin đặt bàn</h2>
 
         <input type="date" value={date} onChange={e=>setDate(e.target.value)} />
-
         <input type="number" placeholder="Số khách" value={guests} onChange={e=>setGuests(e.target.value)} />
 
         <div className="time-grid">
           {timeSlots.map(t=>{
             const disabled = !date || !guests || isPastSlot(t)
             return (
-              <button key={t} disabled={disabled} onClick={()=>setTime(t)}
-                className={isPastSlot(t) ? 'time disabled' : time===t ? 'time active' : 'time'}>
+              <button
+                key={t}
+                disabled={disabled}
+                onClick={()=>setTime(t)}
+                className={
+                  isPastSlot(t) ? 'time disabled'
+                  : time===t ? 'time active'
+                  : 'time'
+                }
+              >
                 {t}
               </button>
             )
@@ -220,15 +226,11 @@ export default function Home() {
         <input placeholder="Tên" onChange={e=>setName(e.target.value)} />
         <input placeholder="SĐT" onChange={e=>setPhone(e.target.value)} />
 
-        {/* 🔥 EMAIL */}
-        <input placeholder="Email" onChange={e=>setEmail(e.target.value)} />
-
-        {/* OTP */}
         {!otpSent && <button onClick={sendOtp}>Gửi OTP</button>}
 
         {otpSent && !otpVerified && (
           <div>
-            <input placeholder="Nhập OTP" value={otpCode} onChange={e=>setOtpCode(e.target.value)} />
+            <input value={otpCode} onChange={e=>setOtpCode(e.target.value)} />
             <button onClick={verifyOtp}>Xác nhận OTP</button>
           </div>
         )}
@@ -252,12 +254,16 @@ export default function Home() {
                   const disabled = !time || invalid || booked
 
                   return (
-                    <button key={t} disabled={disabled} onClick={()=>setSelectedTable(t)}
+                    <button
+                      key={t}
+                      disabled={disabled}
+                      onClick={()=>setSelectedTable(t)}
                       className={
                         selectedTable===t ? 'table active'
                         : disabled ? 'table disabled'
                         : 'table'
-                      }>
+                      }
+                    >
                       Bàn {t}
                       <div>{config.min}-{config.max}</div>
                     </button>
@@ -269,13 +275,15 @@ export default function Home() {
         </>
       )}
 
-      {selectedTable && <p>✅ Bàn {selectedTable} - {time}</p>}
+      {selectedTable && (
+        <p>✅ Bàn {selectedTable} - {time}</p>
+      )}
 
       <div className="sticky-book">
         <button
           onClick={handleBooking}
           disabled={
-            !date || !time || !guests || !name || !phone || !email || !selectedTable || !otpVerified
+            !date || !time || !guests || !name || !phone || !selectedTable || !otpVerified
           }
         >
           Xác nhận đặt bàn
