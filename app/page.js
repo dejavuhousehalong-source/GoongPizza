@@ -33,6 +33,7 @@ export default function Home() {
   const [guests,setGuests] = useState('')
   const [name,setName] = useState('')
   const [phone,setPhone] = useState('')
+  const [email,setEmail] = useState('') // ✅ thêm email
   const [selectedTable,setSelectedTable] = useState(null)
 
   const [bookedTableSlots,setBookedTableSlots] = useState({})
@@ -90,7 +91,7 @@ export default function Home() {
 
   async function fetchBookings(){
     const {data} = await supabase
-      .from('reservations_public') // ✅ CHỈ SỬA DUY NHẤT DÒNG NÀY
+      .from('reservations_public') // ✅ bảo mật
       .select('*')
       .eq('date',date)
 
@@ -124,12 +125,14 @@ export default function Home() {
 
   // ===== OTP =====
   async function sendOtp(){
-    if(!phone) return alert('Nhập SĐT')
+    if(!email && !phone) return alert('Nhập email hoặc SĐT')
+
+    const identifier = email || phone
 
     const res = await fetch('https://tbebsblirpqblimwzesr.supabase.co/functions/v1/send-otp',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ phone })
+      body: JSON.stringify({ identifier }) // ✅ dùng email hoặc phone
     })
 
     if(res.ok){
@@ -139,10 +142,12 @@ export default function Home() {
   }
 
   async function verifyOtp(){
+    const identifier = email || phone
+
     const res = await fetch('https://tbebsblirpqblimwzesr.supabase.co/functions/v1/verify-otp',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ identifier: phone, otp: otpCode })
+      body: JSON.stringify({ identifier, otp: otpCode })
     })
 
     const data = await res.json()
@@ -160,7 +165,6 @@ export default function Home() {
 
     if(!selectedTable || !otpVerified) return
 
-    // check lại backend chống double booking
     const {data:check} = await supabase
       .from('reservations')
       .select('*')
@@ -175,7 +179,7 @@ export default function Home() {
     }
 
     const {error} = await supabase.from('reservations').insert([
-      {name,phone,guests:Number(guests),date,time,table_number:selectedTable}
+      {name,phone,email,guests:Number(guests),date,time,table_number:selectedTable}
     ])
 
     if(!error){
@@ -224,13 +228,14 @@ export default function Home() {
         </div>
 
         <input placeholder="Tên" onChange={e=>setName(e.target.value)} />
+        <input placeholder="Email" onChange={e=>setEmail(e.target.value)} /> {/* ✅ thêm */}
         <input placeholder="SĐT" onChange={e=>setPhone(e.target.value)} />
 
         {!otpSent && <button onClick={sendOtp}>Gửi OTP</button>}
 
         {otpSent && !otpVerified && (
           <div>
-            <input value={otpCode} onChange={e=>setOtpCode(e.target.value)} />
+            <input value={otpCode} onChange={e=>setOtpCode(e.target.value)} placeholder="Nhập OTP" />
             <button onClick={verifyOtp}>Xác nhận OTP</button>
           </div>
         )}
@@ -283,7 +288,7 @@ export default function Home() {
         <button
           onClick={handleBooking}
           disabled={
-            !date || !time || !guests || !name || !phone || !selectedTable || !otpVerified
+            !date || !time || !guests || !name || (!phone && !email) || !selectedTable || !otpVerified
           }
         >
           Xác nhận đặt bàn
